@@ -1,3 +1,4 @@
+import { getClientSecret } from "@/services";
 import {
   useStripe,
   PaymentSheetError,
@@ -5,16 +6,6 @@ import {
 } from "@stripe/stripe-react-native";
 import * as Linking from "expo-linking";
 import { useCallback, useRef } from "react";
-
-import { useInitStripe } from "@/hooks/useInitStripe";
-import { API_PUBLISHABLE_KEY, LOCAL_IP } from "@/config";
-
-const getClientSecret = async () => {
-  const response = await fetch(`http://${LOCAL_IP}:8081/setup-intent`);
-  const data = await response.json();
-
-  return data;
-};
 
 const CANCELED_ERROR = "canceled";
 
@@ -30,7 +21,6 @@ export const useAddStripeCard = ({
   onCancel,
 }: UseAddStripeCardOptions = {}) => {
   const { initPaymentSheet, presentPaymentSheet } = useStripe();
-  const initStripeOnce = useInitStripe();
 
   const isProcessingRef = useRef(false);
 
@@ -41,8 +31,6 @@ export const useAddStripeCard = ({
 
     try {
       const setupIntentClientSecret = await getClientSecret();
-
-      await initStripeOnce(API_PUBLISHABLE_KEY);
 
       const { error: initError } = await initPaymentSheet({
         setupIntentClientSecret,
@@ -77,14 +65,7 @@ export const useAddStripeCard = ({
     } finally {
       isProcessingRef.current = false;
     }
-  }, [
-    initPaymentSheet,
-    presentPaymentSheet,
-    onSuccess,
-    onError,
-    initStripeOnce,
-    onCancel,
-  ]);
+  }, [initPaymentSheet, presentPaymentSheet, onSuccess, onError, onCancel]);
 
   return addCard;
 };
